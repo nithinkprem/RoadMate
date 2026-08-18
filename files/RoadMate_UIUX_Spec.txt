@@ -1,0 +1,276 @@
+UI/UX Specification
+RoadMate
+Screen-by-Screen Catalog
+Customer Web App · Worker App · Admin & Super Admin Portal
+Version 1.0
+Prepared July 2026
+
+Table of Contents
+
+
+
+1. Purpose & Conventions
+This document catalogs every screen across RoadMate's three surfaces — Customer, Worker, and Admin/Super Admin — organized by the phase in which it ships. It is a specification of intent and content, not visual design; wireframes/high-fidelity mockups should be produced against this catalog as a separate design-file exercise (Figma), referencing the design tokens in the Frontend Design guidance used by the engineering team.
+1.1 Design principles
+Mobile-first: every screen is designed for a one-handed phone interaction first, since the dominant use case is a person standing next to a broken-down vehicle.
+Two taps to help: from app open to seeing a nearby result should never exceed two taps/screens (location → issue → results).
+Never a dead end: every screen has a visible path back or forward; error and empty states always suggest a next action (e.g. "No shops found — widen your search radius").
+Trust signals up front: rating, open/closed, and verification badges are visible at the card level, not buried in a detail page.
+
+2. Customer App
+2.1 Phase 1 — Discovery
+#
+Screen
+Key elements
+Primary actions
+C1
+Home / Location capture
+Map preview, "Use current location" CTA, manual search field, recent-issue shortcuts
+Grant location / search manually
+C2
+Issue selection
+Grid of 8 issue-type tiles with icons (Tyre, Battery, Mechanic, Fuel, Towing, Flat Tyre, Car Wash, Air Filling)
+Select one issue type
+C3
+Results — map + list
+Split view: map with pins, scrollable ranked cards (rating, distance, open/closed, ETA, price range), sort/filter bar
+Tap a card, re-sort, filter Open Now
+C4
+Shop detail
+Photo gallery, hours (incl. holiday), services, price range, badges (UPI, mobile mechanic, night service), languages, reviews list, map thumbnail
+Call / Navigate / WhatsApp / Write a review
+C5
+Write a review
+Star selector, text field, optional photo
+Submit review
+C6
+Login / light profile
+Phone OTP login, name field, saved favourites list
+Log in, view saved shops
+C7
+Empty / no-results state
+Illustration, "widen radius" and "try a different issue" suggestions
+Adjust search
+2.2 Phase 2 — Booking
+#
+Screen
+Key elements
+Primary actions
+C8
+Booking request
+Issue summary, location pin (adjustable), notes field, optional photo upload, estimated price range
+Submit booking request
+C9
+Searching for a worker
+Animated "finding nearby help" state with elapsed time, cancel option
+Cancel request
+C10
+Worker assigned
+Worker photo, name, rating, vehicle, ETA, contact button
+Call worker, view job status
+C11
+My Jobs — list
+Tabs: Active, Past; status chips (Requested/Accepted/En Route/Completed/Cancelled)
+Open a job
+C12
+Job detail (active)
+Status timeline, worker info, cancel option with reason field
+Track / Cancel
+2.3 Phase 3 — Live Tracking & Payment
+#
+Screen
+Key elements
+Primary actions
+C13
+Live tracking
+Live map with worker's moving marker, dynamic ETA, share-tracking-link button
+Share with trusted contact
+C14
+Job completed — payment
+Job summary, amount, Razorpay checkout, cash-on-completion fallback toggle
+Pay now / Confirm cash
+C15
+Rate your job
+Star rating, text feedback, tip option (optional)
+Submit rating
+2.4 Phase 4 — Membership, AI, Safety, Fleet, Travel
+#
+Screen
+Key elements
+Primary actions
+C16
+Membership plans
+Plan comparison card, price, coverage list, subscribe CTA
+Subscribe via Razorpay
+C17
+Membership status
+Renewal date, usage this period, cancel option
+Manage subscription
+C18
+AI photo diagnosis
+Camera/upload prompt, result label with confidence + disclaimer, "find shops for this" CTA
+Upload photo, proceed to results
+C19
+AI audio diagnosis
+Record/upload prompt, result label + disclaimer
+Upload audio, proceed to results
+C20
+Emergency panel
+Grid: water, first aid, air pump, fuel, ambulance, police, EV charging + large SOS button
+Trigger emergency request or SOS
+C21
+Trusted contacts
+Add/edit trusted contact for SOS and tracking-share defaults
+Save contact
+C22
+Travel Mode
+Route input, nearest mechanic/fuel/hospital/EV-charger markers along route
+Set route, view waypoints
+C23
+Fleet dashboard (Fleet Admin)
+Vehicle list, service-due alerts, maintenance history per vehicle
+Add vehicle, log maintenance
+
+3. Worker App (Phase 2+)
+3.1 Onboarding & Profile
+#
+Screen
+Key elements
+Primary actions
+W1
+Registration — identity
+Name, phone OTP, profile photo
+Continue
+W2
+Registration — services
+Vehicle types serviced, service categories, price list
+Continue
+W3
+Registration — documents
+ID upload, experience years, base location pin
+Submit for verification
+W4
+Verification pending
+Status message, expected review time, support contact
+—
+W5
+Profile
+Editable service list, pricing, photo, rating summary
+Edit profile
+3.2 Job Management
+#
+Screen
+Key elements
+Primary actions
+W6
+Availability toggle (home)
+Big Online/Offline switch, per-service pause toggles, today's earnings snapshot
+Go online/offline
+W7
+Incoming job request
+Issue type, distance, customer notes/photo, 60s accept countdown
+Accept / Reject
+W8
+Active job
+Customer location, navigate button, Arrived/Completed action buttons
+Navigate, mark Arrived/Completed
+W9
+Job history
+Past jobs, ratings received, earnings per job
+View job detail
+W10
+Earnings & payouts (Phase 3)
+Period summary, commission breakdown, payout schedule
+View payout detail
+
+4. Admin & Super Admin Portal
+4.1 Phase 1 — Directory Management
+#
+Screen
+Key elements
+Primary actions
+A1
+Admin login
+Email/password or SSO, role-gated
+Log in
+A2
+Listings — table view
+Searchable/filterable table of all shops, status badges
+Add / edit / deactivate a listing
+A3
+Listing — add/edit form
+All proprietary fields (owner, phone, services, hours, price, UPI, mobile mechanic, night service, photos, languages)
+Save, mark verified
+A4
+Reviews moderation
+Flagged reviews queue, approve/remove actions
+Moderate a review
+A5
+Analytics overview
+Search volume by issue type, top-viewed shops, city/ward coverage heatmap
+Filter by date range
+4.2 Phase 2 — Worker & Booking Ops
+#
+Screen
+Key elements
+Primary actions
+A6
+Worker applications queue
+Pending applications, document viewer
+Approve / reject with reason
+A7
+Worker directory
+All workers, status, rating, activity
+Suspend / reinstate a worker
+A8
+Bookings — live board
+Kanban-style view by status (Requested/Accepted/En Route/Completed/Cancelled)
+Investigate a stuck/cancelled job
+4.3 Phase 3 — Ops & Finance
+#
+Screen
+Key elements
+Primary actions
+A9
+Ops analytics
+Completion rate, time-to-accept, ETA accuracy, GMV, active workers, trend charts
+Filter by date/city
+A10
+Payments ledger
+Transaction list, commission totals, payout status per worker
+Reconcile / export
+4.4 Phase 4 — Growth & Multi-city (Super Admin)
+#
+Screen
+Key elements
+Primary actions
+A11
+Membership management
+Subscriber list, renewal status, churn view
+Manage a subscription
+A12
+AI diagnosis review
+Sample predictions vs. outcomes, confidence trends
+Flag low-confidence categories for review
+A13
+Emergency & SOS log
+Log of emergency/SOS events with resolution status
+Review an incident
+A14
+City configuration (Super Admin)
+Add a city, set service radius, enable launch categories
+Create/edit a city config
+A15
+Admin user management (Super Admin)
+Add/remove admin users, assign roles
+Manage admin access
+
+5. Navigation Flow Summary
+5.1 Customer primary flow (Phase 1)
+Home (C1) → Issue selection (C2) → Results (C3) → Shop detail (C4) → [Call / Navigate / WhatsApp, exits to native app] or Write a review (C5, requires C6 login).
+5.2 Customer primary flow (Phase 2+)
+Shop/worker detail (C4) → Booking request (C8) → Searching (C9) → Worker assigned (C10) → Live tracking (C13, Phase 3) → Payment (C14, Phase 3) → Rate (C15, Phase 3). My Jobs (C11) is reachable from the main navigation at any time.
+5.3 Worker primary flow
+Registration (W1–W3) → Verification pending (W4) → Availability toggle (W6) → Incoming job request (W7) → Active job (W8) → Job history (W9).
+5.4 Admin primary flow
+Login (A1) → Listings (A2) [Phase 1] → Worker applications (A6) and Bookings board (A8) [Phase 2] → Ops analytics (A9) and Payments (A10) [Phase 3] → City configuration (A14) and Admin management (A15) [Phase 4].

@@ -1,0 +1,88 @@
+Marketing, Launch & Revenue Plan
+RoadMate
+Go-to-Market Strategy
+Companion to the RoadMate PRD v1.0
+Version 1.0
+Prepared July 2026
+
+Table of Contents
+
+
+
+1. Go-to-Market Philosophy
+RoadMate's value only exists once there is enough supply density in a small area for search results to feel reliable. The go-to-market plan is therefore supply-first and hyperlocal: win one set of Calicut neighbourhoods completely before expanding, rather than spreading thin across the city on day one.
+1.1 Launch sequencing principle
+Supply (verified shops/mechanics) is recruited and seeded before any consumer-facing marketing spend, so that the first wave of consumer users who try the product get a genuinely useful result rather than a sparse, disappointing directory.
+2. Pre-Launch (Weeks -6 to 0)
+2.1 Supply seeding
+Use Google Places data to build an initial long-list of tyre shops, mechanics, battery dealers, and fuel-delivery contacts in the launch neighbourhoods (Section 3.4 of the PRD flags this as needing primary verification, not just scraping).
+Visit or call the highest-density category (tyre/puncture shops) first, since that is the single most common breakdown and the best proof-of-concept category.
+Offer free listing enrichment in exchange for accurate hours, pricing bands, and a photo — this is a manual, high-touch process for the first 100–150 listings, not a self-serve flow yet.
+Target a minimum viable density before any public launch: at least ~15 verified listings per core category within the launch radius (see PRD Section 15.1 success metric).
+2.2 Landing page & waitlist
+A simple landing page collects waitlist signups and doubles as an early willingness-to-pay signal for the future Premium Membership (Section 4 open research item in the PRD).
+Local SEO groundwork: Google Business Profile presence, city + category landing pages ("tyre puncture shop near Calicut") built for organic search, launched ahead of the product itself.
+
+3. Launch Week
+3.1 Channels
+Channel
+Role at launch
+Local WhatsApp & community groups
+Highest-trust channel in Kerala for a hyperlocal service; direct outreach in resident and commuter groups covering the launch neighbourhoods
+Instagram/Facebook local ads
+Geo-targeted ads within the launch radius, creative built around the "breakdown at night" and "who do I even call" pain points
+Shop-partner cross-promotion
+Recruited shops display a RoadMate window sticker/QR code, converting their existing walk-in traffic into app awareness
+Local press / city blogs
+A Calicut-focused tech/startup story angle: "Google Maps + Swiggy, for the roadside"
+College and ride-share/delivery-rider communities
+High breakdown frequency, high smartphone fluency, strong word-of-mouth propagation
+3.2 Launch-week goals
+Hit the minimum viable listing density in at least 2–3 launch neighbourhoods before any paid promotion begins.
+Track the Section 15.1 PRD metrics from day one: weekly active searchers, search→action rate, review submission rate.
+Run a manual daily check on "open now" accuracy for the first two weeks — this is the single fastest way to lose first-time-user trust (see PRD Risk table, Section 19).
+4. Post-Launch Growth (Months 1–6)
+4.1 Neighbourhood-by-neighbourhood expansion
+Rather than opening all of Calicut at once, expand ward-by-ward as each new area reaches the minimum listing density, using the same manual-recruitment playbook proven in launch week. This keeps the "is this actually useful near me" experience consistently strong as the footprint grows.
+4.2 Retention loop
+Push/SMS re-engagement is deliberately deferred until Phase 2 notifications infrastructure exists; in Phase 1, retention is driven by search quality and word-of-mouth alone.
+Shop-side retention: a simple weekly WhatsApp check-in to keep hours/status fresh doubles as a light-touch relationship-management channel until self-serve owner accounts exist.
+4.3 SEO plan
+Public, indexable shop-detail pages (Section 2.2's Next.js SSR choice supports this) become long-tail SEO assets — "[category] near [neighbourhood], Calicut" pages.
+Structured data (schema.org LocalBusiness) on shop pages to support rich search results.
+Content: a small set of practical, non-salesy guides ("what to do if your bike won't start at night") that naturally link into the search flow.
+
+5. Revenue Rollout
+Revenue streams and their phase gating are specified in the PRD, Section 4. This section adds the go-to-market sequencing for each.
+Stream
+When to switch on
+Go-to-market approach
+Commission per job
+Once booking (Phase 2) has enough completed-job volume that a small commission doesn't suppress adoption
+Introduce at a low introductory rate for early-cohort workers, with a transparent published rate card
+Featured/Priority listing
+After Phase 1 organic listing density is established
+Offer only to already-verified shops in high-search categories, framed as "get seen first," not pay-to-be-listed-at-all
+Premium membership
+Phase 4, only if landing-page waitlist and Phase 2/3 repeat-usage data support willingness to pay
+Launch to the existing active-user base first via in-app upsell, not cold acquisition
+Advertising
+Phase 3–4, once there is meaningful traffic to justify sponsor interest
+Start with category-relevant local sponsors (tyre brands, fuel stations) before opening to generic ad networks
+Fleet subscription
+Phase 4, as a parallel B2B motion
+Direct outbound to Calicut-area delivery/logistics businesses, not a self-serve funnel initially
+6. Expansion Roadmap
+Stage
+Trigger to proceed
+Calicut (launch city)
+Baseline — minimum listing density and Phase 1 success metrics achieved (PRD Section 15.1)
+Kochi
+Calicut shows sustained repeat usage and a validated recruitment playbook that a small team can replicate without founder-level hand-holding
+Trivandrum
+Kochi launch replicates Calicut's metrics within a comparable timeframe, confirming the playbook (not just the city) generalizes
+Kerala-wide
+At least 2 successful city launches with consistent unit economics on commission/listing revenue
+India
+Kerala-wide operations are profitable or on a clear path, and the worker-verification and payments infrastructure (Phase 2–3) has proven reliable at multi-city scale
+Each expansion stage reuses the same phased product roadmap (PRD Section 7) rather than requiring a new build — the product's phase gates are about capability maturity, not city count, so a new city launch is a go-to-market exercise, not a re-engineering one.

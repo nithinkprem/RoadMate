@@ -1,26 +1,182 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+
+  /* Custom design tokens for RoadMate */
+  --color-safety-amber: var(--safety-amber);
+  --color-safety-orange: var(--safety-orange);
+  --color-navy-dark: var(--navy-dark);
+  --color-navy-light: var(--navy-light);
+  --color-success: var(--success);
+
+  --animate-pulse-glow: pulse-glow 2s infinite ease-in-out;
+  --animate-float: float 3s infinite ease-in-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 5px rgba(245, 158, 11, 0.4),
+      0 0 15px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 15px rgba(245, 158, 11, 0.8),
+      0 0 30px rgba(245, 158, 11, 0.4);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+:root {
+  /* UI System Palette - Sleek Professional Light Mode */
+  --background: oklch(0.985 0.005 240);
+  --foreground: oklch(0.18 0.03 240);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.03 240);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.03 240);
+
+  /* Deep Navy Brand Color for Trust & Security */
+  --primary: oklch(0.24 0.06 240);
+  --primary-foreground: oklch(0.985 0.005 240);
+
+  --secondary: oklch(0.94 0.01 240);
+  --secondary-foreground: oklch(0.24 0.06 240);
+
+  /* Amber/Orange Accents for High-Visibility Safety */
+  --accent: oklch(0.79 0.17 76);
+  --accent-foreground: oklch(0.18 0.03 240);
+
+  --muted: oklch(0.94 0.01 240);
+  --muted-foreground: oklch(0.55 0.02 240);
+
+  --destructive: oklch(0.58 0.21 25);
+  --destructive-foreground: oklch(0.985 0.005 240);
+
+  --border: oklch(0.91 0.01 240);
+  --input: oklch(0.91 0.01 240);
+  --ring: oklch(0.79 0.17 76 / 50%);
+
+  --radius: 0.75rem;
+
+  /* Custom Tokens */
+  --safety-amber: oklch(0.79 0.17 76);
+  --safety-orange: oklch(0.68 0.22 46);
+  --navy-dark: oklch(0.16 0.04 240);
+  --navy-light: oklch(0.38 0.08 240);
+  --success: oklch(0.65 0.18 140);
+}
+
+.dark {
+  /* UI System Palette - Deep Midnight Dark Mode */
+  --background: oklch(0.12 0.02 240);
+  --foreground: oklch(0.95 0.01 240);
+
+  --card: oklch(0.16 0.03 240);
+  --card-foreground: oklch(0.95 0.01 240);
+
+  --popover: oklch(0.16 0.03 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+
+  /* Slate-Blue Primary for Dark Mode */
+  --primary: oklch(0.38 0.08 240);
+  --primary-foreground: oklch(0.985 0.005 240);
+
+  --secondary: oklch(0.2 0.03 240);
+  --secondary-foreground: oklch(0.95 0.01 240);
+
+  --accent: oklch(0.79 0.17 76);
+  --accent-foreground: oklch(0.12 0.02 240);
+
+  --muted: oklch(0.2 0.03 240);
+  --muted-foreground: oklch(0.7 0.02 240);
+
+  --destructive: oklch(0.58 0.21 25);
+  --destructive-foreground: oklch(0.985 0.005 240);
+
+  --border: oklch(0.22 0.03 240);
+  --input: oklch(0.22 0.03 240);
+  --ring: oklch(0.79 0.17 76 / 60%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Premium utility classes for RoadMate styling */
+@utility glassmorphism {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.dark .glassmorphism {
+  background: rgba(22, 28, 45, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility text-glow-amber {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+@utility button-warning-gradient {
+  background: linear-gradient(135deg, var(--safety-amber) 0%, var(--safety-orange) 100%);
+  color: oklch(0.18 0.03 240);
 }

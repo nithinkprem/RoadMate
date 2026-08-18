@@ -1,0 +1,9 @@
+.next
+node_modules
+out
+dist
+build
+public
+package-lock.json
+*.docx
+*.txt

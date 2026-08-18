@@ -1,0 +1,185 @@
+QA & Test Plan
+RoadMate
+Test Strategy, Case Catalog & Automation Framework
+Companion to the RoadMate PRD v1.0
+Version 1.0
+Prepared July 2026
+
+Table of Contents
+
+
+
+1. Test Strategy
+RoadMate is built test-first: acceptance criteria are written alongside each functional requirement in the PRD, and automated coverage is added in the same pull request as the feature, not after. This document defines the testing pyramid, environment strategy, and a representative test-case catalog per phase; the full case set should be maintained as living Playwright specs in the repository rather than a static document once Phase 1 reaches staging.
+1.1 Testing pyramid
+Layer
+Scope
+Owner
+Tooling
+Unit
+Ranking/scoring logic, distance calculation, hours/open-closed evaluation, price formatting
+Engineering
+Vitest / Jest
+Integration / API
+Supabase RPC & REST endpoints, RLS policy behaviour, Edge Function contracts
+QA + Engineering
+Playwright API testing / Newman
+End-to-end
+Full user journeys across Customer, Worker, Admin
+QA
+Playwright
+Non-functional
+Load, accessibility, basic security checks
+QA
+k6, axe-core, OWASP ZAP baseline
+Exploratory / manual
+New feature sign-off, edge cases automation hasn't caught yet
+QA
+Manual, structured session notes
+1.2 Environment strategy
+Preview: Playwright E2E smoke suite runs against every pull request's Vercel preview deploy.
+Staging: full regression suite plus load and security testing before each release candidate.
+Production: post-deploy smoke suite (read-only checks + a synthetic non-destructive booking in Phase 2+) plus ongoing synthetic monitoring.
+1.3 Release gate
+A release is eligible for production promotion only when: all Must-priority FR test cases pass, no open Sev-1/Sev-2 defects, the E2E smoke suite is green on staging, and — from Phase 3 onward — the payment webhook reconciliation check has been manually verified for the release candidate.
+
+2. Phase 1 Test Case Catalog (representative)
+2.1 Location & search
+ID
+Scenario
+Expected result
+TC-1.1
+User grants geolocation permission on first load
+Coordinates captured; results reflect the granted location
+TC-1.2
+User denies geolocation and searches a location manually
+Manual search returns a valid location; results reflect it
+TC-1.3
+User selects an issue type with zero nearby shops in radius
+Empty state shown with a widen-radius suggestion, no error thrown
+TC-1.4
+User widens search radius from 5 km to 15 km
+Result set updates to include shops between 5–15 km, sorted correctly
+TC-1.5
+Search executed at radius boundary (shop exactly at 5.00 km)
+Boundary shop is included per documented inclusive-radius rule
+2.2 Results & shop detail
+ID
+Scenario
+Expected result
+TC-2.1
+Results list and map pins stay in sync when a card is tapped
+Corresponding pin highlights/centers on the map
+TC-2.2
+Shop marked closed per hours_json at current time
+Card shows "Closed" and is de-prioritized in default sort, not hidden
+TC-2.3
+Tap Call on a shop card
+Native dialer opens with the correct number pre-filled
+TC-2.4
+Tap Navigate on a shop card
+Google Maps opens with correct destination coordinates
+TC-2.5
+Tap WhatsApp on a shop card
+WhatsApp opens a chat with the shop's number pre-filled
+TC-2.6
+Shop detail page loads for a listing with zero photos
+Placeholder image shown, no layout break
+2.3 Reviews
+ID
+Scenario
+Expected result
+TC-3.1
+Logged-out user attempts to submit a review
+Redirected to login; review not submitted until authenticated
+TC-3.2
+Logged-in user submits a valid 1–5 star review with text
+Review appears newest-first; shop average rating recalculates correctly
+TC-3.3
+User flags a review as inappropriate
+Review enters the Admin moderation queue; remains visible until Admin acts
+2.4 Admin
+ID
+Scenario
+Expected result
+TC-4.1
+Admin creates a new shop listing with all proprietary fields
+Listing appears in public search once marked verified
+TC-4.2
+Admin deactivates a listing
+Listing no longer appears in public search results immediately
+TC-4.3
+Non-admin user attempts to access an /admin route
+Access denied / redirected; RLS also blocks direct data access
+TC-4.4
+Admin approves a flagged review
+Review remains visible, flag cleared
+TC-4.5
+Admin removes a flagged review
+Review no longer visible publicly, average rating recalculates
+
+3. Phase 2–3 Test Case Catalog (representative)
+3.1 Booking & matching
+ID
+Scenario
+Expected result
+TC-5.1
+Customer submits a booking with ≥5 eligible online workers nearby
+Job routed to nearest 5 workers by distance; each receives a notification
+TC-5.2
+First worker to accept wins; a second worker attempts to accept after
+Second worker sees "job no longer available"; no double-assignment occurs
+TC-5.3
+No worker accepts within the 60-second SLA
+Job automatically re-routes to the next nearest 5 eligible workers
+TC-5.4
+Customer cancels a job before acceptance
+Job status becomes cancelled; assigned worker (if any) is notified
+TC-5.5
+Worker goes offline mid-queue (before responding to a routed job)
+Worker is excluded from that job's active routing without error
+3.2 Tracking & payments
+ID
+Scenario
+Expected result
+TC-6.1
+Worker location updates during an active job
+Customer's live map reflects the update within the documented interval
+TC-6.2
+Worker marks a job Completed
+Customer is presented with the Razorpay checkout for the correct amount
+TC-6.3
+Razorpay webhook confirms payment success
+Payment status updates to paid; commission and payout ledger update correctly
+TC-6.4
+Razorpay webhook reports a failed payment
+Payment status updates to failed; customer is offered a retry
+TC-6.5
+Customer rates a completed job
+Worker's aggregate rating recalculates correctly and immediately
+
+4. Non-Functional Testing
+4.1 Performance / load
+Search endpoint: sustain the target concurrency (defined per launch-city sizing) with p95 response time under 2 seconds.
+Booking-matcher function: verify correct behaviour under simulated concurrent booking submissions in the same micro-area, to catch race conditions in worker assignment.
+Load test tooling: k6 scripts checked into the repository, run against staging before each major release.
+4.2 Accessibility
+Automated axe-core scan on every core screen in the Playwright suite; zero critical/serious violations allowed to merge.
+Manual keyboard-navigation and screen-reader pass on the core Customer journey once per release.
+4.3 Security testing
+RLS policy tests: attempt cross-user data access for every table with a policy, confirm denial.
+OWASP ZAP baseline scan against staging before each release.
+Payment webhook signature verification test: reject unsigned/forged webhook payloads.
+Admin route access tests: confirm role-gating for Admin vs. Super Admin scoped actions (e.g. city configuration).
+
+5. Playwright Automation Framework
+5.1 Structure
+`/tests/e2e/customer/` — search, detail, review, booking, tracking, payment, rating specs
+`/tests/e2e/worker/` — registration, availability, job-response, active-job specs
+`/tests/e2e/admin/` — listings, moderation, worker-verification, analytics specs
+`/tests/api/` — direct Supabase REST/RPC and Edge Function contract tests
+`/tests/fixtures/` — seeded test data (shops, workers, users) reset per test run via a dedicated test schema/project
+5.2 CI integration
+The full Playwright suite runs on every pull request against a preview deployment; a lighter smoke subset runs post-deploy against staging and production. Flaky tests are quarantined into a tracked list rather than silently retried indefinitely, to keep the signal trustworthy.
+5.3 Regression suite ownership
+Each new Must-priority FR ships with at least one E2E test in the same pull request. QA reviews and, where needed, extends coverage during sprint testing before a feature is marked release-ready.

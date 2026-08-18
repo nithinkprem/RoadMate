@@ -1,0 +1,236 @@
+System Design Document
+RoadMate
+Architecture, Data & API Specification
+Companion to the RoadMate PRD v1.0
+Version 1.0
+Prepared July 2026
+
+Table of Contents
+
+
+
+1. Purpose & Scope
+This document translates the RoadMate PRD into an implementable system design: architecture, full data model across all four phases, API contracts, third-party integration flows, and deployment topology. It should be read alongside the PRD, which owns product rationale, and the UI/UX Specification, which owns screen-level detail.
+2. Architecture Overview
+2.1 Guiding principle
+Keep Phase 1 server-less and cheap to operate, and introduce a dedicated application-server layer only where Supabase's built-in capabilities stop being sufficient — specifically for booking-matching logic, notification dispatch, live-tracking ingestion, and payment webhooks, all introduced from Phase 2 onward.
+2.2 Component map
+Component
+Responsibility
+Introduced
+Web client (Next.js on Vercel)
+Customer-facing search, booking, and account UI; server-rendered for SEO on public shop pages
+Phase 1
+Admin client (Next.js, auth-gated route group)
+Listings, moderation, analytics, worker verification
+Phase 1 (expanded Phase 2+)
+Worker client (responsive web app, installable PWA)
+Registration, availability, job queue, navigation, earnings
+Phase 2
+Supabase Postgres
+System of record for all entities
+Phase 1
+Supabase Auth
+Phone/email authentication, session/JWT issuance
+Phase 1
+Supabase Storage
+Shop photos, worker documents, review images
+Phase 1
+Supabase Edge Functions
+Geo-ranked search, booking matcher, analytics aggregation
+Phase 1 (search), Phase 2 (matcher)
+Notification service (OneSignal/FCM)
+Push notifications for booking lifecycle events
+Phase 2
+Payments service (Razorpay + webhook handler)
+Checkout, subscriptions, settlement, refunds
+Phase 3
+Analytics (PostHog)
+Event tracking, funnels, dashboards
+Phase 1 lightweight, Phase 3 full
+AI diagnosis service
+Image/audio classification for issue suggestion
+Phase 4
+2.3 Data flow — core booking loop (Phase 2+)
+Customer submits a booking via the web client → API request to a Supabase Edge Function (`create-booking`).
+Function inserts a `bookings` row (status = requested) and queries `workers`/`worker_services` for the nearest N online, eligible workers.
+Function enqueues notification payloads for those workers via the notification service.
+Workers receive push notifications; first Accept response wins (optimistic locking on `bookings.worker_id`).
+On acceptance, a notification is sent to the customer and the booking status transitions to accepted.
+Worker's client posts periodic location updates to `tracking_events` (Phase 3), which the customer client subscribes to via Supabase Realtime.
+On completion, a Razorpay order is created (Phase 3); the webhook handler updates `payments` and the booking ledger on success.
+
+3. Full Data Model (all phases)
+The Phase 1 core tables (shops, shop_photos, reviews, users, search_logs) are specified in the PRD, Section 11. This section adds the entity-relationship summary across all phases in one place for engineering reference.
+3.1 Entity-relationship summary
+Entity
+Key relationships
+users
+1—N reviews, 1—1 workers (if role=worker), 1—N bookings (as customer), 1—1 memberships
+shops
+1—N shop_photos, 1—N reviews; independent of workers (Phase 1 directory entries, not all become Phase 2 workers)
+workers
+1—1 users, 1—N worker_services, 1—N bookings (as assigned worker), 1—N tracking_events (via bookings)
+bookings
+N—1 users (customer), N—1 workers (nullable until accepted), 1—1 payments, 1—N tracking_events, 1—N notifications
+payments
+1—1 bookings
+memberships
+N—1 users
+fleet_vehicles
+N—1 users (fleet account), 1—N fleet_maintenance_logs
+emergency_requests
+N—1 users, references shops or workers depending on resolution path
+ai_diagnosis_logs
+N—1 users, optionally 1—1 bookings if it led to a booking
+3.2 Enumerations reference
+Enum
+Values
+category
+tyre, battery, mechanic, fuel, towing, car_wash, air_filling (+ water, first_aid, ev_charging from Phase 4)
+booking status
+requested, accepted, en_route, arrived, completed, cancelled
+verification_status
+pending, approved, rejected
+payment status
+created, paid, failed, refunded
+membership status
+active, expired, cancelled
+notification type
+job_request, job_accepted, job_completed, system
+
+4. API Contracts — Full Surface
+Phase 1 endpoints are listed in the PRD, Section 12. This section specifies the Phase 2–4 additions.
+4.1 Phase 2 — Worker & Booking APIs
+Method & Path
+Purpose
+Auth
+POST /workers/register
+Submit worker application with documents
+Logged-in user
+GET /workers/me
+Fetch own worker profile & status
+Worker
+PATCH /workers/me/availability
+Toggle online/offline, per-service pause
+Worker
+POST /admin/workers/:id/verify
+Approve or reject a worker application
+Admin
+POST /bookings
+Create a booking request
+Customer
+GET /bookings/:id
+Booking detail & status
+Customer or assigned worker
+POST /bookings/:id/accept
+Worker accepts a routed job
+Worker
+POST /bookings/:id/reject
+Worker declines a routed job
+Worker
+POST /bookings/:id/cancel
+Either party cancels with reason
+Customer or worker
+GET /notifications
+Fetch unread/recent notifications
+Any authenticated user
+4.2 Phase 3 — Tracking & Payments
+Method & Path
+Purpose
+Auth
+POST /bookings/:id/tracking
+Worker posts a location ping
+Worker
+GET /bookings/:id/tracking/stream
+Realtime subscription channel for tracking updates
+Customer or assigned worker
+POST /bookings/:id/arrive
+Mark job Arrived
+Worker
+POST /bookings/:id/complete
+Mark job Completed, triggers payment step
+Worker
+POST /payments/create-order
+Create a Razorpay order for a completed booking
+Customer
+POST /payments/webhook
+Razorpay server-to-server payment status callback
+Razorpay signature
+POST /bookings/:id/rate
+Submit post-job rating
+Customer
+GET /admin/analytics/ops
+Job completion rate, response time, GMV, active workers
+Admin
+4.3 Phase 4 — Membership, AI, Fleet, Emergency
+Method & Path
+Purpose
+Auth
+POST /memberships/subscribe
+Start Razorpay recurring subscription
+Customer
+GET /memberships/me
+Current membership status & usage
+Customer
+POST /ai/diagnose-image
+Upload photo, return likely-issue label
+Customer
+POST /ai/diagnose-audio
+Upload audio clip, return likely-cause label
+Customer
+POST /emergency
+Submit an emergency request (incl. SOS flag)
+Customer
+POST /fleet/vehicles
+Register a fleet vehicle
+Fleet Admin
+POST /fleet/vehicles/:id/maintenance
+Log a maintenance event
+Fleet Admin
+GET /fleet/vehicles/:id/alerts
+Upcoming service/tyre/insurance due alerts
+Fleet Admin
+POST /admin/cities
+Add/configure a new launch city
+Super Admin
+
+5. Integration Design
+5.1 Google Maps Platform
+Maps JavaScript API renders the results map and shop-detail static map.
+Places API is used once, offline, to seed the initial Calicut shop directory; not called live per-search to control cost.
+Directions API powers the "Navigate" action, opening native Google Maps with a pre-filled destination.
+Distance calculation for ranking uses a server-side Haversine/PostGIS calculation against stored coordinates, not a live Directions call, to keep search latency and cost low.
+5.2 Notifications (OneSignal/FCM)
+Each booking-lifecycle transition (requested→accepted, accepted→arrived, etc.) publishes an event that the notification service maps to a push payload.
+Delivery failures are retried with backoff; in-app notification list (FR notifications table) is always the source of truth, push is best-effort.
+5.3 Payments (Razorpay)
+One-time payments use Razorpay Orders + Checkout for per-job payment at completion.
+Memberships use Razorpay Subscriptions for recurring annual billing.
+All payment state changes are driven by verified webhook events, never by client-reported success, to prevent spoofed payment confirmation.
+5.4 AI Diagnosis (Phase 4)
+Image/audio classification can start as a hosted third-party model call (e.g. a vision/audio classification API) rather than a custom-trained model, to reach market faster; a proprietary model trained on RoadMate's own job-outcome data is a post-Phase-4 evolution.
+Every prediction is logged to ai_diagnosis_logs with a confidence score and is always presented to the user as a suggestion the user can override, never an autonomous action.
+
+6. Deployment & Environments
+Environment
+Purpose
+Notes
+Local
+Developer machines
+Supabase CLI local stack + Next.js dev server
+Preview
+Per-pull-request Vercel deploy + Supabase branch/staging schema
+Used for QA sign-off before merge
+Staging
+Pre-production, mirrors prod config
+Used for load/security testing before releases
+Production
+Live customer traffic
+Vercel production + Supabase production project, daily automated DB backups
+6.1 CI/CD
+GitHub Actions runs lint, type-check, unit tests, and the Playwright E2E suite against a preview deploy on every pull request. Merges to main auto-deploy to staging; production deploys are a manual promotion step gated on the QA sign-off checklist in the Test Plan companion document.
+6.2 Observability
+Error tracking via a hosted error-monitoring service (e.g. Sentry) wired into both the Next.js client and Edge Functions.
+PostHog event tracking for product funnels (search → detail view → contact action → Phase 2+ booking → completion).
+Structured logging on all Edge Functions with request IDs for traceability across the booking-matching flow.

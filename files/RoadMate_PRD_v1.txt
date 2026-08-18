@@ -1,0 +1,996 @@
+PRODUCT REQUIREMENTS DOCUMENT
+RoadMate
+The Mobility Assistance Platform
+Version 1.0  |  Phase 1 MVP Blueprint
+Market: Calicut, Kerala  →  Kerala  →  India
+Prepared July 2026
+"Google Maps + Swiggy, for the roadside."
+
+Table of Contents
+
+
+
+1. Executive Summary
+RoadMate is a mobility assistance platform that connects stranded vehicle owners in Kerala with the nearest available mechanics, tyre shops, battery services, fuel delivery agents, and towing operators in real time. It starts as a hyperlocal directory-plus-booking product for Calicut and is architected from day one to expand into a full two-sided marketplace: a Customer app, a Worker (mechanic) app, and an Admin/Super Admin back office.
+The core insight driving this product is simple: when a vehicle breaks down, there is no single place that answers "who is nearby, open right now, and can help me in the next 15 minutes?" People currently fall back on Google search, Google Maps, WhatsApp groups, or calling around — none of which are purpose-built for an urgent, location-based, time-sensitive need.
+Rather than attempting to become a full roadside-assistance insurer (like AAA) or a general services marketplace (like Urban Company) in version one, RoadMate deliberately starts narrow: a location + issue-type search that surfaces nearby help with live status, distance, ETA and price band, backed by a proprietary database that is richer than what Google Maps alone provides. Monetization, worker onboarding, live tracking, payments and AI-assisted diagnosis are sequenced into later phases once the core directory has proven demand.
+This document defines the product for Phase 1 (the buildable MVP) in full detail — screens, data model, APIs, and acceptance criteria — and defines Phases 2 through 4 at a roadmap level of detail so that scope, budget and timeline decisions can be made without over-committing engineering effort before the core loop is validated.
+1.1 Product in one line
+A hyperlocal marketplace that finds you the nearest verified help for any vehicle breakdown in under a minute, and later lets you book, track, and pay for it — starting in Calicut, Kerala.
+1.2 Why now
+Two-wheeler and car ownership in Kerala continues to rise, and Calicut/Kozhikode's road and traffic density makes breakdowns a frequent, high-friction event.
+Google Maps surfaces "tyre shops near me" but has no live open/closed reliability, no price transparency, no booking, and no worker-side tooling.
+On-demand marketplace patterns (Uber, Swiggy, Urban Company) are now culturally familiar in Kerala, lowering the adoption cost for a similarly structured roadside product.
+Cloud infrastructure (Supabase, Vercel, managed Postgres) makes it realistic for a small team to ship a production-grade MVP without managing servers.
+1.3 What Phase 1 does and does not include
+Phase 1 includes: location capture, issue-based search, a Google-Maps-backed + proprietary shop directory, shop detail pages, call/navigate/WhatsApp actions, ratings and reviews, and an admin dashboard to manage listings. Phase 1 explicitly excludes: in-app booking with worker acceptance, live GPS tracking, in-app payments, premium membership, and AI diagnosis — these are sequenced into Phases 2 through 4 once the directory has real usage data.
+
+2. Vision, Mission & Problem Statement
+2.1 Vision
+To become the default platform that anyone in Kerala opens the moment their vehicle breaks down — and eventually, the operating layer for on-demand vehicle care across India.
+2.2 Mission
+Give every stranded vehicle owner a fast, transparent, trustworthy way to find nearby help, and give every independent mechanic, tyre shop, and roadside worker a digital storefront and steady stream of customers — starting with the single, well-defined use case of breakdown assistance in Calicut.
+2.3 Problem Statement
+When a vehicle breaks down in Kerala — a punctured tyre, a dead battery, an empty tank, a bike that won't start, a broken chain — the owner has no single, reliable channel to find nearby help. Today's alternatives are all imperfect:
+Current behaviour
+Why it falls short
+Search Google
+Generic listings, no live open/closed status, no price signal, no urgency-aware ranking
+Ask nearby people
+Unreliable, slow, doesn't scale, no accountability if the recommendation is bad
+Call friends
+Depends entirely on the friend's local knowledge; fails while travelling
+Search Google Maps
+Shows shops, but not which are currently open for roadside help, not price, not ETA, no booking or tracking
+Table 2.1 — Current alternatives and their gaps
+This gap is most acute at night, on unfamiliar roads, or for women travelling alone — situations where speed, trust and verified identity of the responder matter most.
+2.4 Guiding Product Principle
+RoadMate is built and named as a Mobility Assistance Platform, not narrowly as "Roadside Assistance." This is deliberate: the same location + issue-type + nearby-provider core loop extends naturally to tyre shops, battery services, fuel delivery, towing, EV charging, bike wash, insurance, and scheduled service booking, without requiring a re-architecture of the product later.
+
+3. Market Research & Competitive Landscape
+3.1 Market context
+Kerala has one of India's highest vehicle-ownership densities relative to population, and Calicut (Kozhikode) is a dense mid-size city with heavy two-wheeler usage, making roadside breakdowns a frequent occurrence. The target launch geography is deliberately narrow — a single city — so that supply-side density (enough registered mechanics per neighbourhood) can be reached quickly, which is the precondition for the marketplace to feel reliable to a first-time user.
+This document does not present sized TAM/SAM/SOM figures, since credible numbers require primary research (mechanic counts per ward, average breakdown frequency, willingness to pay) that should be gathered during Phase 1 pilot rather than assumed. This is flagged as an open research item in Section 3.4.
+3.2 Competitive landscape
+Player
+What they do
+Gap RoadMate exploits
+Google Maps / Search
+General business directory, reviews
+No live availability, no issue-based flow, no booking, no worker tooling
+AAA-style RSA / insurer add-ons
+Subscription roadside assistance bundled with insurance
+Slow claims-style experience, not built for hyperlocal on-demand discovery, weak in Tier-2 cities
+Urban Company
+On-demand home services marketplace
+Not vehicle-focused, not built for urgent/roadside use cases, not present in this category
+Local WhatsApp / word-of-mouth groups
+Informal recommendation networks
+Not scalable, no verification, no price transparency
+Standalone mechanic apps (fragmented, regional)
+Single-shop or single-city apps with limited reach
+Low awareness, no network effect, inconsistent UX
+Table 3.1 — Competitive landscape summary
+3.3 Positioning statement
+For vehicle owners in Kerala who need urgent roadside help, RoadMate is a hyperlocal mobility assistance platform that shows the nearest verified help with live status and price — unlike Google Maps or word-of-mouth, RoadMate is purpose-built for the moment of breakdown, and unlike national RSA providers, RoadMate is fast, local, and usable without a subscription.
+3.4 Open research items before/during Phase 1 pilot
+Density of registered tyre/battery/mechanic shops per ward in Calicut, and their willingness to be listed for free vs. paid featured placement.
+Average price bands for common jobs (puncture repair, battery jump-start, towing) to calibrate the price-range shown on shop cards.
+Willingness to pay for a ₹999/year premium membership, validated via a landing-page waitlist before Phase 4 build.
+Regulatory/insurance considerations for towing and ambulance-adjacent emergency features.
+
+4. Business Model & Revenue Streams
+Phase 1 carries no monetization — the priority is supply (shop listings) and demand (search usage) density. Revenue streams below are sequenced into later phases as noted.
+Stream
+Description
+Phase introduced
+Commission per job
+Platform retains a share (e.g. ~10%) of the value of a completed booking made through the app
+Phase 2–3, once booking exists
+Featured / Priority listing
+Shops pay a monthly fee (e.g. ₹499/month) to rank first in search results
+Phase 2
+Premium roadside membership
+Consumer subscription (e.g. ₹999/year) bundling unlimited common services
+Phase 4
+Advertising
+Tyre brands, battery companies, insurers, fuel stations sponsor placements
+Phase 3–4
+Fleet subscription
+Businesses with vehicle fleets pay monthly for maintenance tracking and service-due alerts
+Phase 4 / B2B track
+Table 4.1 — Revenue model by phase
+4.1 Why monetization is deferred
+Introducing commission or subscription pricing before there is a reliable base of active shops and repeat searches risks suppressing the exact adoption the product needs to prove out. Phase 1's only goal is to prove the core loop: a user searches, finds a relevant nearby option, and takes an action (call, navigate, or WhatsApp).
+
+5. User Personas
+Anand, 29 — Daily commuter, two-wheeler owner
+"My bike chain snapped on the way to work. I had no idea which shop nearby was even open at 8am."
+Goals
+Find the nearest open shop for his specific problem in under a minute.
+Trust that the shop is legitimate before travelling there or calling.
+Pain points
+Google Maps shows shops that turn out to be closed or don't do two-wheeler repair.
+No price expectation before arriving.
+Meera, 34 — Working professional, car owner, night traveller
+"I don't want to call a random number I found online at 11pm on an empty road."
+Goals
+Feel safe requesting help at night — verified providers, ability to share live location with a trusted contact.
+Get an ETA so she knows how long she'll be waiting.
+Pain points
+Existing options offer no verification signal.
+No safety features like SOS or live-location sharing.
+Rasheed, 41 — Tyre shop owner, Calicut
+"Most of my new customers come from people driving past — I have no online presence."
+Goals
+Get discovered by nearby customers without paying for expensive ads.
+Manage which hours he's marked as open without needing a website.
+Pain points
+No digital storefront today.
+Hesitant about complex onboarding — needs something as simple as a WhatsApp Business profile.
+Fleet Admin, small logistics business — B2B customer (Phase 4)
+"I have 10 delivery bikes and no visibility into which one needs a service or new tyres."
+Goals
+Track maintenance and service-due dates across a small fleet.
+Reduce unplanned downtime.
+Pain points
+Currently tracked in spreadsheets or not at all.
+
+6. User Journeys
+6.1 Customer journey — Phase 1 (Directory & Discovery)
+Opens RoadMate website/app.
+Grants location access (or searches a location manually).
+Selects the issue: Tyre Puncture, Battery, Mechanic, Fuel Delivery, Towing, Flat Tyre, Car Wash, or Air Filling.
+Views a map with nearby matching shops, plus a ranked list of cards (rating, distance, open/closed, ETA, price range).
+Opens a shop detail page for more information (services, hours, photos, reviews).
+Takes an action: Call, Navigate (opens Google Maps directions), or WhatsApp.
+Optionally leaves a rating/review after the interaction.
+6.2 Customer journey — Phase 2+ (Booking & Tracking)
+Steps 1–5 as above.
+Instead of calling directly, taps "Book" and submits a job request.
+Nearby available workers are notified; one accepts the job.
+Customer sees the worker's live location and ETA (Phase 3).
+Job is marked complete by the worker; customer pays in-app (Phase 3) and rates the job.
+6.3 Worker (mechanic) journey — Phase 2+
+Registers with name, phone, location, vehicle type serviced, services offered, pricing, experience, and documents.
+Account is verified by the Admin team before going live.
+Toggles Online/Offline availability.
+Receives job requests, can Accept or Reject.
+Navigates to customer location, marks job complete.
+Views earnings and ratings history.
+6.4 Admin journey
+Logs into the Admin Panel.
+Manages the shop/listing directory: add, edit, verify, deactivate.
+Reviews and approves worker registrations and documents (Phase 2+).
+Monitors bookings, complaints, and reviews for moderation.
+Views analytics: searches by issue type, city coverage, most-viewed shops.
+
+7. Product Scope & Phased Roadmap
+The founder's original vision spans roadside assistance, premium memberships, a full mechanic marketplace, a job portal, remote skilled workers, emergency kits, water delivery, AI diagnosis, fleet management, insurance, an ERP, and a learning platform. That is an appropriately large long-term vision, but far too much for a first release. The roadmap below sequences it so each phase is independently shippable and validates the next.
+Phase
+Focus
+Est. duration
+Key deliverables
+Phase 1
+Directory & Discovery MVP
+4–8 weeks
+Location capture, issue-based search, shop directory (Google Maps + proprietary DB), shop detail pages, call/navigate/WhatsApp, reviews, admin dashboard
+Phase 2
+Marketplace foundations
+6–10 weeks
+Worker registration & verification, availability status, booking requests, push notifications
+Phase 3
+Live operations
+6–10 weeks
+Live GPS tracking, in-app payments (Razorpay), ratings pipeline, analytics dashboard
+Phase 4
+Growth & differentiation
+Ongoing
+Premium membership, AI-assisted issue identification, fleet management, emergency/safety features, expansion beyond Calicut
+Table 7.1 — Phased roadmap
+7.1 Explicitly out of scope for this PRD
+The following ideas from the original vision are acknowledged as valuable but are treated as post-Phase-4 exploration, not committed roadmap: remote skilled-worker job portal, physical emergency kit sales/delivery, drinking-water/first-aid delivery, insurance underwriting, a full ERP, and a learning/training platform for mechanics. Each would need its own problem validation before being scoped.
+
+8. Functional Requirements
+Phase 1 requirements are specified to acceptance-criteria level of detail, since this is the phase intended for immediate build. Phases 2–4 are specified at feature level; each will receive its own detailed FR set as it is scheduled.
+8.1 Phase 1 — Location & Onboarding
+ID
+Requirement
+Priority
+FR-1.1
+User can grant browser/device geolocation permission and have their coordinates captured automatically on first load.
+Must
+FR-1.2
+User can manually search and select a location (address or landmark) if geolocation is denied or inaccurate.
+Must
+FR-1.3
+System defaults the search radius to 5 km, adjustable by the user (1–15 km).
+Should
+FR-1.4
+No login is required to search; login is only required to leave a review or save favourites.
+Must
+8.2 Phase 1 — Issue Selection & Search
+ID
+Requirement
+Priority
+FR-2.1
+User selects exactly one issue type from: Tyre Puncture, Battery, Mechanic, Fuel Delivery, Towing, Flat Tyre, Car Wash, Air Filling.
+Must
+FR-2.2
+System returns a ranked list of nearby shops matching the selected issue type, sorted by a blended score of distance and rating by default.
+Must
+FR-2.3
+User can re-sort results by Distance, Rating, or Open Now.
+Should
+FR-2.4
+User can filter by "Open Now" only.
+Should
+FR-2.5
+Results are shown simultaneously as map pins and a scrollable list, kept in sync (selecting one highlights the other).
+Must
+8.3 Phase 1 — Shop Card & Detail Page
+ID
+Requirement
+Priority
+FR-3.1
+Each result card displays: shop name, star rating, distance (km), open/closed status, estimated ETA, and price range.
+Must
+FR-3.2
+Each card exposes three direct actions: Call, Navigate, WhatsApp.
+Must
+FR-3.3
+Tapping a card opens a detail page with: full address, hours (incl. holiday schedule), services offered, photos, languages spoken, UPI-accepted flag, mobile-mechanic flag, night-service flag, and reviews.
+Must
+FR-3.4
+"Navigate" opens Google Maps turn-by-turn directions in a new tab/app.
+Must
+FR-3.5
+"Call" triggers the device's native dialer with the shop's number pre-filled.
+Must
+8.4 Phase 1 — Reviews & Ratings
+ID
+Requirement
+Priority
+FR-4.1
+Logged-in users can leave a 1–5 star rating and optional text review for a shop.
+Must
+FR-4.2
+Reviews are displayed newest-first on the shop detail page, with average rating recalculated on submission.
+Must
+FR-4.3
+Users can flag a review as inappropriate for Admin moderation.
+Should
+8.5 Phase 1 — Admin Dashboard
+ID
+Requirement
+Priority
+FR-5.1
+Admin can add, edit, deactivate, and delete shop listings, including all proprietary fields (owner name, phone, services, hours, price, UPI, mobile mechanic, night service, photos, languages).
+Must
+FR-5.2
+Admin can import/seed initial listings sourced from Google Maps data and enrich them with proprietary fields.
+Must
+FR-5.3
+Admin can view and moderate flagged reviews.
+Should
+FR-5.4
+Admin can view basic analytics: searches by issue type, top-viewed shops, city/ward coverage.
+Should
+FR-5.5
+Admin actions are logged with timestamp and admin user ID for audit purposes.
+Could
+8.6 Phase 2 — Marketplace Foundations
+ID
+Requirement
+Priority
+FR-6.1
+A prospective worker can self-register with name, phone (OTP-verified), profile photo, base location, vehicle types serviced, services offered, price list, years of experience, and ID document upload.
+Must
+FR-6.2
+A registered worker's profile is held in a "pending verification" state and is not visible to customers until an Admin approves it.
+Must
+FR-6.3
+Admin can review submitted documents, approve or reject a worker application, and record a rejection reason.
+Must
+FR-6.4
+A verified worker can toggle a single Online/Offline switch controlling visibility in nearby-search and booking eligibility.
+Must
+FR-6.5
+A worker can mark individual services as temporarily unavailable (e.g. "not doing towing today") without going fully offline.
+Should
+FR-6.6
+A customer can tap "Book" from a shop/worker detail page to submit a job request containing issue type, location, and optional notes/photo.
+Must
+FR-6.7
+A submitted job request is routed to the nearest N online workers (configurable, default 5) offering that service, ranked by distance.
+Must
+FR-6.8
+A worker receives a push/in-app notification for an incoming job request and can Accept or Reject within a 60-second window.
+Must
+FR-6.9
+If no worker accepts within the SLA window, the job is automatically re-routed to the next nearest 5 workers.
+Must
+FR-6.10
+Once a worker accepts, the job is locked to that worker and removed from other workers' queues; the customer is notified of the assignment.
+Must
+FR-6.11
+Customer and worker each have a running "My Jobs" list showing status: Requested, Accepted, En Route, Completed, Cancelled.
+Must
+FR-6.12
+Either party can cancel a job before completion, with a required reason; repeated cancellations are flagged for Admin review.
+Should
+8.7 Phase 3 — Live Operations
+ID
+Requirement
+Priority
+FR-7.1
+Once a job is Accepted, the worker's live location updates on the customer's map at a minimum 10-second interval until job completion.
+Must
+FR-7.2
+Customer sees a dynamically updated ETA based on the worker's live position and road distance.
+Should
+FR-7.3
+Worker can mark a job "Arrived" and then "Completed"; each transition is timestamped.
+Must
+FR-7.4
+On job completion, the customer is presented with a Razorpay checkout for the agreed amount (cash-on-completion remains an allowed fallback in Phase 3).
+Must
+FR-7.5
+Platform commission is calculated and recorded at the point of payment settlement; worker payout ledger is updated accordingly.
+Must
+FR-7.6
+Payment success/failure triggers a webhook that updates job and ledger status; failed payments allow retry.
+Must
+FR-7.7
+Customer is prompted to rate the completed job (1–5 stars + optional text); the worker's aggregate rating recalculates.
+Must
+FR-7.8
+Admin analytics dashboard reports job completion rate, average time-to-accept, average ETA accuracy, GMV, and active worker count, filterable by date range and city.
+Should
+8.8 Phase 4 — Growth & Differentiation
+ID
+Requirement
+Priority
+FR-8.1
+Customer can subscribe to a Premium Roadside Membership (e.g. ₹999/year) via Razorpay recurring billing, covering a defined set of services at no per-job charge up to defined limits.
+Must
+FR-8.2
+Membership status is checked at booking time and, if active and within limits, bypasses the standard payment step at job completion.
+Must
+FR-8.3
+Customer can upload a photo of a tyre/part; the system returns a likely-issue label (e.g. "puncture", "sidewall damage") and pre-fills the issue-selection step, with a disclaimer that this is an assistive suggestion, not a certified diagnosis.
+Should
+FR-8.4
+Customer can upload a short audio clip (e.g. engine/starter sound); the system returns a likely-cause suggestion (battery, starter, engine) and routes to relevant provider categories.
+Could
+FR-8.5
+An Emergency button surfaces one-tap access to: drinking water, first aid, air pump, fuel, ambulance, police, and EV charging, using the same nearby-search infrastructure as core categories.
+Should
+FR-8.6
+Customer can share a live tracking link of their active job with a trusted contact via WhatsApp/SMS, without that contact needing the app.
+Should
+FR-8.7
+An SOS action is available during any active job or emergency search, notifying a pre-set trusted contact and (where integrated) local authorities.
+Could
+FR-8.8
+Customer can enable a "verified mechanics only" mode restricting matches to workers who have completed enhanced identity verification, recommended as default for night bookings.
+Should
+FR-8.9
+A Fleet Admin account type can register multiple vehicles, log maintenance events, and receive alerts when a service or tyre-replacement threshold is reached.
+Could
+FR-8.10
+Travel Mode allows a customer to enter a route (origin → destination) and see nearest mechanic, fuel pump, hospital, and EV charger points along that route, refreshed as they travel.
+Could
+FR-8.11
+Platform supports multi-city configuration in Admin (add a new city, set its service radius and launch categories) without a code deployment.
+Must
+
+9. Non-Functional Requirements
+Category
+Requirement
+Performance
+Search results return in under 2 seconds for a 5 km radius query under normal load.
+Availability
+99.5% uptime target for Phase 1; higher SLOs introduced once bookings carry payments.
+Scalability
+Database and API layer should comfortably support growth from one city to five without re-architecture (Postgres via Supabase, stateless API layer).
+Accessibility
+Core flows (search, call, navigate) usable with screen readers and at minimum WCAG 2.1 AA colour contrast.
+Localization
+UI supports English and Malayalam at minimum; shop-level data supports multiple spoken-language tags.
+Security & Privacy
+Location data is used only for the active session unless the user opts into saved addresses; phone numbers are never displayed publicly without shop owner consent.
+Data integrity
+Shop open/closed status and pricing must be editable only by verified owners or Admin, with an audit trail.
+Mobile-first
+Optimised for mobile web first (majority of breakdown searches happen on a phone, often on the roadside).
+
+10. Information Architecture — Phase 1 Screens
+Phase 1 requires a focused screen set. Later phases add the Worker App and expanded Admin modules noted in Section 7.
+#
+Screen
+Purpose
+1
+Home / Location capture
+Get current location or manual search
+2
+Issue selection
+Choose the type of breakdown/need
+3
+Results (map + list)
+Nearby shops matching the issue
+4
+Shop detail
+Full info, photos, reviews, actions
+5
+Write a review
+Rating + text, post-interaction
+6
+Login / Profile (light)
+Required only to review or save favourites
+7
+Admin — Login
+Restricted access
+8
+Admin — Listings management
+Add/edit/deactivate shop listings
+9
+Admin — Reviews moderation
+Approve/flag/remove reviews
+10
+Admin — Analytics overview
+Search volume, top shops, coverage
+
+11. Database Design (Phase 1 core schema)
+The schema below covers the tables required for Phase 1. It is intentionally normalized but small; Phases 2–4 add tables for bookings, workers, payments, and memberships as noted at the end of this section — the founder's original estimate of 250–350 tables over the full multi-year vision is directionally reasonable for the end-state product but is not a Phase 1 concern.
+11.1 shops
+Column
+Type
+Notes
+id
+uuid, PK
+Primary key
+name
+text
+Shop / provider name
+owner_name
+text
+Proprietary field, not from Google Maps
+phone
+text
+Contact number
+category
+enum
+tyre, battery, mechanic, fuel, towing, car_wash, air_filling
+latitude / longitude
+numeric
+Geo-coordinates
+address
+text
+Full address
+hours_json
+jsonb
+Structured weekly hours + holiday overrides
+price_range
+text
+e.g. ₹150–300
+supports_upi
+boolean
+Proprietary field
+mobile_mechanic
+boolean
+Proprietary field
+night_service
+boolean
+Proprietary field
+languages
+text[]
+Spoken languages
+source
+enum
+google_maps, manual, worker_registered
+verified
+boolean
+Admin-verified flag
+created_at / updated_at
+timestamptz
+Audit timestamps
+11.2 shop_photos
+Column
+Type
+Notes
+id
+uuid, PK
+
+shop_id
+uuid, FK → shops.id
+
+url
+text
+Supabase Storage path
+sort_order
+int
+
+11.3 reviews
+Column
+Type
+Notes
+id
+uuid, PK
+
+shop_id
+uuid, FK → shops.id
+
+user_id
+uuid, FK → users.id
+
+rating
+int (1–5)
+
+text
+text
+Optional
+flagged
+boolean
+Set by user report
+created_at
+timestamptz
+
+11.4 users
+Column
+Type
+Notes
+id
+uuid, PK
+Supabase Auth user
+name
+text
+
+phone / email
+text
+
+role
+enum
+customer, admin (worker role added Phase 2)
+created_at
+timestamptz
+
+11.5 search_logs
+Column
+Type
+Notes
+id
+uuid, PK
+
+user_id
+uuid, nullable
+Null for anonymous search
+issue_type
+enum
+
+latitude / longitude
+numeric
+Search origin
+result_count
+int
+
+created_at
+timestamptz
+Feeds Admin analytics
+11.6 workers (Phase 2)
+Column
+Type
+Notes
+id
+uuid, PK
+
+user_id
+uuid, FK → users.id
+1:1 with auth account
+base_latitude / base_longitude
+numeric
+Home base location
+vehicle_types
+text[]
+two_wheeler, car, etc.
+experience_years
+int
+
+documents_json
+jsonb
+ID/license upload references
+verification_status
+enum
+pending, approved, rejected
+online
+boolean
+Availability toggle
+rating_avg / rating_count
+numeric / int
+Denormalized for fast reads
+created_at / updated_at
+timestamptz
+
+11.7 worker_services (Phase 2)
+Column
+Type
+Notes
+id
+uuid, PK
+
+worker_id
+uuid, FK → workers.id
+
+category
+enum
+Same set as shops.category
+price_range
+text
+
+active
+boolean
+Per-service temporary pause
+11.8 bookings (Phase 2)
+Column
+Type
+Notes
+id
+uuid, PK
+
+customer_id
+uuid, FK → users.id
+
+worker_id
+uuid, FK → workers.id, nullable
+Null until accepted
+category
+enum
+
+status
+enum
+requested, accepted, en_route, arrived, completed, cancelled
+origin_latitude / origin_longitude
+numeric
+
+notes / photo_url
+text
+Optional customer context
+requested_at / accepted_at / completed_at
+timestamptz
+
+cancel_reason
+text
+Nullable
+11.9 notifications (Phase 2)
+Column
+Type
+Notes
+id
+uuid, PK
+
+user_id
+uuid, FK → users.id
+Recipient (customer or worker)
+booking_id
+uuid, FK → bookings.id, nullable
+
+type
+enum
+job_request, job_accepted, job_completed, system
+read
+boolean
+
+created_at
+timestamptz
+
+11.10 payments (Phase 3)
+Column
+Type
+Notes
+id
+uuid, PK
+
+booking_id
+uuid, FK → bookings.id
+
+amount
+numeric
+
+commission_amount
+numeric
+Platform share
+razorpay_order_id / razorpay_payment_id
+text
+
+status
+enum
+created, paid, failed, refunded
+created_at
+timestamptz
+
+11.11 tracking_events (Phase 3)
+Column
+Type
+Notes
+id
+uuid, PK
+
+booking_id
+uuid, FK → bookings.id
+
+worker_latitude / worker_longitude
+numeric
+
+recorded_at
+timestamptz
+Append-only, ~10s cadence
+11.12 memberships (Phase 4)
+Column
+Type
+Notes
+id
+uuid, PK
+
+user_id
+uuid, FK → users.id
+
+plan
+enum
+annual_999 (extensible)
+status
+enum
+active, expired, cancelled
+razorpay_subscription_id
+text
+
+renews_at
+timestamptz
+
+usage_json
+jsonb
+Tracks limits consumed this period
+11.13 fleet_vehicles & fleet_maintenance_logs (Phase 4)
+Column
+Type
+Notes
+fleet_account_id
+uuid, FK → users.id
+Fleet Admin owner
+vehicle_reg_no / type
+text
+
+maintenance_logs.event_type
+enum
+tyre, battery, service, insurance
+maintenance_logs.due_date
+date
+Drives alerting
+11.14 emergency_requests & ai_diagnosis_logs (Phase 4)
+Column
+Type
+Notes
+emergency_requests.type
+enum
+water, first_aid, air_pump, fuel, ambulance, police, ev_charging
+emergency_requests.sos
+boolean
+True if triggered via SOS
+ai_diagnosis_logs.input_type
+enum
+photo, audio
+ai_diagnosis_logs.predicted_label / confidence
+text / numeric
+Model output, shown with disclaimer
+11.7 Row-Level Security (RLS)
+Supabase RLS policies restrict: shop owners (once self-serve onboarding exists in Phase 2) to editing only their own listing; customers to editing only their own reviews and profile; Admin role bypasses restrictions via a service-role policy scoped to the Admin panel backend only, never exposed to the client.
+
+12. API Documentation — Phase 1
+All endpoints are served via Supabase auto-generated REST/RPC on top of Postgres, supplemented by a small number of custom Edge Functions for geo-ranked search and analytics aggregation.
+Method & Path
+Purpose
+Auth
+GET /shops/search?lat&lng&radius&issue
+Geo-ranked search returning shops matching an issue type within a radius
+Public
+GET /shops/:id
+Shop detail including photos and reviews
+Public
+POST /reviews
+Submit a review for a shop
+Logged-in user
+POST /reviews/:id/flag
+Flag a review for moderation
+Logged-in user
+POST /auth/login, /auth/otp
+Phone/email login via Supabase Auth
+Public
+GET /admin/shops
+List all shops for management
+Admin
+POST /admin/shops
+Create a shop listing
+Admin
+PATCH /admin/shops/:id
+Edit a shop listing
+Admin
+DELETE /admin/shops/:id
+Deactivate/delete a listing
+Admin
+GET /admin/analytics/overview
+Search volume, top shops, coverage stats
+Admin
+Phase 2+ adds endpoints for worker registration and verification, booking creation and status transitions, and notification dispatch; Phase 3 adds payment intent creation and webhook handling for Razorpay, plus live-tracking event ingestion.
+
+13. Third-Party Integrations
+Integration
+Purpose
+Phase
+Google Maps Platform (Maps, Places, Directions)
+Base map, initial shop data seed, turn-by-turn navigation
+Phase 1
+Supabase (Auth, Postgres, Storage)
+Authentication, database, file storage
+Phase 1
+OneSignal / Firebase Cloud Messaging
+Push notifications for booking status
+Phase 2
+Razorpay
+In-app payment collection and commission settlement
+Phase 3
+PostHog
+Product analytics and funnel tracking
+Phase 1 (lightweight) / Phase 3 (full dashboards)
+WhatsApp Business (click-to-chat links)
+One-tap WhatsApp contact from a shop card
+Phase 1
+
+14. Security & Permissions
+14.1 Roles
+Role
+Access
+Anonymous visitor
+Search and view shop details only
+Registered customer
+Above, plus reviews, favourites, booking history (Phase 2+)
+Shop owner / Worker (Phase 2+)
+Manage own listing/profile, availability, job responses
+Admin
+Full listings, reviews moderation, analytics
+Super Admin (Phase 2+)
+Admin permissions plus city/category configuration and admin-user management
+14.2 Key security requirements
+All write endpoints require authentication; RLS policies enforce row-level ownership at the database layer, not just in application code.
+Phone numbers of individual workers/owners are not exposed in public API responses beyond what's needed for the Call action (click-to-call, not raw scraping-friendly display, once workers are onboarded in Phase 2).
+Admin panel is access-restricted by role and, at minimum, protected with strong authentication; MFA recommended once real payment data flows through the platform in Phase 3.
+Payment data (Phase 3) is never stored directly — handled via Razorpay's hosted checkout/tokenization.
+
+15. Analytics & Success Metrics
+15.1 Phase 1 success metrics
+Metric
+Target signal for validation
+Weekly active searchers
+Sustained week-over-week growth without paid acquisition
+Search → action rate (Call/Navigate/WhatsApp)
+≥ 40% of searches result in a contact action
+Shop coverage per issue type in Calicut
+≥ 15 listed and verified shops per category in the launch area
+Review submission rate
+Enough reviews accumulating to make ratings meaningful (early proxy for trust)
+Repeat searchers within 30 days
+Signals real recurring need, not one-off curiosity
+15.2 Metrics introduced in later phases
+Phase 2: booking conversion rate, worker acceptance rate, time-to-accept.
+Phase 3: job completion rate, average ETA accuracy, GMV, take-rate revenue, payment success rate.
+Phase 4: membership conversion and renewal rate, AI-diagnosis usage and accuracy feedback, fleet accounts onboarded.
+
+16. QA & Testing Strategy
+Given the founder's QA background, RoadMate is well positioned to be built test-first rather than tested-after. The recommended testing pyramid for Phase 1:
+Layer
+Scope
+Tooling
+Unit tests
+Search ranking logic, distance calculation, hours/open-closed evaluation
+Vitest / Jest
+API / integration tests
+Supabase RPC and REST endpoints, RLS policy behaviour
+Playwright API testing or Postman/Newman
+End-to-end tests
+Core customer journey: location → issue → results → detail → call/navigate/WhatsApp
+Playwright
+Admin regression suite
+Listing CRUD, review moderation, analytics rendering
+Playwright
+Non-functional
+Load test search endpoint at target concurrency; accessibility scan (axe-core)
+k6, axe-core
+16.1 Sample acceptance criteria (illustrative)
+For FR-2.2 (ranked nearby results): Given a user at a known coordinate with at least 5 shops of the selected category within radius, when the search executes, then all returned shops are within the specified radius, sorted by the documented blended score, and each includes distance, rating, open/closed status, and price range with no null-rendering in the UI.
+A full test-case suite (functional, API, and Playwright automation scripts) should be authored as a companion QA document once Phase 1 UI is in staging, so cases reference real selectors rather than speculative ones.
+
+17. Technology Stack & Deployment Architecture
+Layer
+Choice
+Rationale
+Frontend
+Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
+Fast to build, strong ecosystem, good SEO for public shop pages
+Maps
+Google Maps Platform (Maps JS, Places, Directions APIs)
+Best coverage and familiarity in India
+Backend / DB
+Supabase (Postgres, Auth, Storage, Edge Functions)
+Managed infra removes server-ops burden for a small team
+Notifications
+OneSignal or Firebase Cloud Messaging
+Phase 2+, cross-platform push
+Payments
+Razorpay
+Phase 3+, India-first payment gateway with UPI support
+Analytics
+PostHog
+Self-hostable or cloud, good funnel/product analytics fit
+Hosting
+Vercel (frontend), Supabase (backend)
+Zero/low server management, generous free tiers for early stage
+CI/CD
+GitHub Actions → Vercel deploy previews → production
+Standard, low-friction pipeline
+17.1 High-level architecture
+The client (Next.js app, deployed on Vercel) talks directly to Supabase for auth, data reads/writes (governed by RLS), and storage, with a small number of Edge Functions for geo-ranked search and admin analytics aggregation that shouldn't run as raw client-side queries. Google Maps Platform is called client-side for map rendering and directions, and server-side (or via a scheduled job) for the initial shop-data seed/enrichment. This keeps Phase 1 server-less and cheap to run, while leaving a clear seam to introduce a dedicated Node.js service in Phase 2+ for booking-matching logic, notification dispatch, and payment webhook handling.
+
+18. Build Prompt Library (Outline)
+Rather than a single prompt, Phase 1 should be built as a sequence of scoped prompts (for Lovable, Claude Code, or a similar AI build tool), each producing one coherent, testable slice. This keeps generated code consistent and reviewable. Suggested Phase 1 sequence:
+#
+Prompt scope
+Depends on
+1
+Project scaffold: Next.js + TypeScript + Tailwind + shadcn/ui, base layout, design tokens
+—
+2
+Supabase project setup: schema migration for shops, shop_photos, reviews, users, search_logs + RLS policies
+1
+3
+Auth: Supabase Auth (email/phone), light login modal, session handling
+1, 2
+4
+Home screen: geolocation capture + manual location search
+1
+5
+Issue-selection screen and routing to results
+4
+6
+Results screen: Google Maps embed + synced list, geo-ranked search Edge Function
+2, 5
+7
+Shop detail screen: hours, photos, proprietary fields, reviews list
+2, 6
+8
+Review submission flow
+3, 7
+9
+Admin panel: auth-gated shell + listings CRUD
+2, 3
+10
+Admin: reviews moderation + analytics overview
+9
+11
+Seed script: import initial Google Places data for launch categories in Calicut, map into schema
+2
+12
+QA pass: Playwright E2E for core customer journey + admin regression suite
+1–11
+Phases 2–4 will each receive their own prompt sequence (worker app, booking/notifications, live tracking/payments, membership/AI/fleet) once scheduled — attempting to pre-write all ~80 prompts today would lock in assumptions before Phase 1 usage data exists to inform them.
+
+19. Key Risks & Open Questions
+Risk
+Mitigation
+Cold-start supply problem — not enough verified shops listed at launch to make results useful
+Manually seed and enrich Google Maps data for the top categories in Calicut before public launch; recruit shop owners directly rather than waiting for self-serve signups
+Data staleness — an "open now" flag that's wrong erodes trust fast
+Start with conservative default hours plus a simple owner-editable toggle (even via a weekly WhatsApp check-in) before investing in real-time hardware/IoT signals
+Safety liability for towing/emergency features
+Treat towing/ambulance/police as referral-and-connect only in Phase 1–3, not a platform-guaranteed service, until legal/insurance review is complete
+Scope creep back into the full original vision
+Hold to the phase gates in Section 7; require a lightweight validation note before any Phase 4+ item is pulled forward
+Worker trust in a new platform (Phase 2)
+Zero/low commission during a launch period, transparent payout terms, fast manual verification turnaround
