@@ -14,6 +14,8 @@
 /coverage
 /test-results/
 /playwright-report/
+/tests/e2e/allure-results
+/tests/e2e/playwright-report
 
 # next.js
 /.next/
